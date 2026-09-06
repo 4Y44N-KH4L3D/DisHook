@@ -2,7 +2,7 @@ import sys,json,base64,mimetypes,html,os
 from urllib.parse import urlparse
 import requests
 
-from PySide6.QtCore import Qt,Signal,QPropertyAnimation,QParallelAnimationGroup,QThread,QObject
+from PySide6.QtCore import Qt,Signal,Slot,QPropertyAnimation,QParallelAnimationGroup,QThread,QObject
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication,QWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QLabel,
@@ -331,6 +331,12 @@ class WebhookWorker(QObject):
             self.finished.emit({"kind":"connection","error":error})
 
 
+class WebhookReceiver(QObject):
+    @Slot(object)
+    def handle(self,result):
+        webhook_finished(result)
+
+
 class PreviewWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -539,7 +545,7 @@ def send_webhook():
     worker=WebhookWorker(url,avatar_path,payload)
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
-    worker.finished.connect(webhook_finished, Qt.QueuedConnection)
+    worker.finished.connect(webhook_receiver.handle, Qt.QueuedConnection)
     worker.finished.connect(thread.quit)
     worker.finished.connect(worker.deleteLater)
     thread.finished.connect(thread.deleteLater)
@@ -664,6 +670,7 @@ def enter_app():
 
 
 app=QApplication(sys.argv)
+webhook_receiver=WebhookReceiver()
 
 app.setStyleSheet("""
 QWidget {
