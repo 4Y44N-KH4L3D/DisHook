@@ -1,9 +1,9 @@
-import sys,json,base64,mimetypes,html
+import sys,json,base64,mimetypes,html,os
 from urllib.parse import urlparse
 import requests
 
-from PySide6.QtCore import Qt,Signal,QUrl,QPropertyAnimation,QParallelAnimationGroup
-from PySide6.QtGui import QColor,QDesktopServices
+from PySide6.QtCore import Qt,Signal,QPropertyAnimation,QParallelAnimationGroup,QThread,QObject
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication,QWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QLabel,
     QLineEdit,QTextEdit,QPushButton,QMessageBox,QFileDialog,QGroupBox,
@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
 MAX_CONTENT,MAX_FIELDS=2000,25
 MAX_TITLE,MAX_DESCRIPTION=256,4096
 MAX_AUTHOR,MAX_FIELD_NAME,MAX_FIELD_VALUE,MAX_FOOTER=256,256,1024,2048
+MAX_EMBED_CONTENT=6000
+MAX_AVATAR_BYTES=8*1024*1024
 DEFAULT_COLOR="#5865F2"
 
 avatar_path=""
@@ -57,10 +59,14 @@ def valid_url(url):
 def valid_webhook(url):
     try:
         p=urlparse(url)
+        parts=p.path.split("/")
         return (
             p.scheme=="https"
             and p.netloc.lower() in {"discord.com","discordapp.com"}
-            and p.path.startswith("/api/webhooks/")
+            and len(parts)==5
+            and parts[1:3]==["api","webhooks"]
+            and parts[3].isdigit()
+            and bool(parts[4])
         )
     except Exception:
         return False
@@ -75,7 +81,7 @@ def choose_image(title):
 def image_data_url(path):
     try:
         mime=mimetypes.guess_type(path)[0]
-        if mime not in {"image/png","image/jpeg","image/gif","image/webp"}:
+        if mime not in {"image/png","image/jpeg","image/gif","image/webp"} or os.path.getsize(path)>MAX_AVATAR_BYTES:
             return None
         with open(path,"rb") as f:
             return f"data:{mime};base64,{base64.b64encode(f.read()).decode()}"
@@ -297,6 +303,34 @@ def build_embed(image_url=None,thumbnail_url=None):
     return e
 
 
+def embed_size(embed):
+    return len(embed.get("title",""))+len(embed.get("description",""))+sum(
+        len(f["name"])+len(f["value"]) for f in embed.get("fields",[])
+    )+len(embed.get("footer",{}).get("text",""))+len(embed.get("author",{}).get("name",""))
+
+
+class WebhookWorker(QObject):
+    finished=Signal(object)
+
+    def __init__(self,url,path,payload):
+        super().__init__()
+        self.url=url
+        self.path=path
+        self.payload=payload
+
+    def run(self):
+        if self.path:
+            ok,error=update_avatar(self.url,self.path)
+            if not ok:
+                self.finished.emit({"kind":"avatar","error":error})
+                return
+        try:
+            response=requests.post(self.url,json=self.payload,timeout=20)
+            self.finished.emit({"kind":"response","response":response})
+        except requests.RequestException as error:
+            self.finished.emit({"kind":"connection","error":error})
+
+
 class PreviewWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -483,14 +517,10 @@ def send_webhook():
         QMessageBox.warning(window,"Nothing to Send","Enter a message or enable an embed.")
         return
 
-    if avatar_path:
-        set_status("Updating avatar...","#faa61a")
-        ok,error=update_avatar(url,avatar_path)
-
-        if not ok:
-            set_status("Avatar update failed","#ed4245")
-            QMessageBox.critical(window,"Avatar Error",error)
-            return
+    if e and embed_size(e)>MAX_EMBED_CONTENT:
+        set_status("Embed too large","#ed4245")
+        QMessageBox.warning(window,"Embed Too Large","Discord embeds can contain up to 6000 characters.")
+        return
 
     payload={"allowed_mentions":{"parse":[]}}
 
@@ -503,51 +533,58 @@ def send_webhook():
     if e:
         payload["embeds"]=[e]
 
-    try:
-        set_status("Sending webhook...","#faa61a")
-        r=requests.post(url,json=payload,timeout=20)
+    send_button.setEnabled(False)
+    set_status("Sending webhook...","#faa61a")
+    thread=QThread()
+    worker=WebhookWorker(url,avatar_path,payload)
+    worker.moveToThread(thread)
+    thread.started.connect(worker.run)
+    worker.finished.connect(webhook_finished)
+    worker.finished.connect(thread.quit)
+    worker.finished.connect(worker.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+    thread.finished.connect(lambda:setattr(window,"_webhook_thread",None))
+    window._webhook_thread=thread
+    thread.start()
 
-        if r.status_code in (200,204):
-            set_status("Sent successfully","#57f287")
-            QMessageBox.information(window,"Success","Webhook sent successfully!")
-            return
 
-        if r.status_code==429:
-            try:
-                retry=float(r.json().get("retry_after",1))
-            except (ValueError,TypeError):
-                try:
-                    retry=float(r.headers.get("Retry-After",1))
-                except (ValueError,TypeError):
-                    retry=1
+def webhook_finished(result):
+    send_button.setEnabled(True)
 
-            set_status(f"Rate limited — retry after {retry:.1f}s","#faa61a")
-            QMessageBox.warning(
-                window,
-                "Rate Limited",
-                f"Discord rate-limited this webhook.\n\nRetry after approximately {retry:.1f} seconds."
-            )
-            return
+    if result["kind"]=="avatar":
+        set_status("Avatar update failed","#ed4245")
+        QMessageBox.critical(window,"Avatar Error",result["error"])
+        return
 
-        try:
-            error_text=json.dumps(r.json(),indent=2)
-        except ValueError:
-            error_text=r.text
-
-        set_status(f"Failed ({r.status_code})","#ed4245")
-        QMessageBox.critical(
-            window,
-            "Discord Error",
-            f"Discord returned HTTP {r.status_code}.\n\n{error_text}"
-        )
-
-    except requests.RequestException as error:
+    if result["kind"]=="connection":
         set_status("Connection error","#ed4245")
-        QMessageBox.critical(
-            window,
-            "Connection Error",
-            f"Could not contact Discord:\n{error}"
-        )
+        QMessageBox.critical(window,"Connection Error",f"Could not contact Discord:\n{result['error']}")
+        return
+
+    r=result["response"]
+    if r.status_code in (200,204):
+        set_status("Sent successfully","#57f287")
+        QMessageBox.information(window,"Success","Webhook sent successfully!")
+        return
+
+    if r.status_code==429:
+        try:
+            retry=float(r.json().get("retry_after",1))
+        except (ValueError,TypeError):
+            try:
+                retry=float(r.headers.get("Retry-After",1))
+            except (ValueError,TypeError):
+                retry=1
+        set_status(f"Rate limited — retry after {retry:.1f}s","#faa61a")
+        QMessageBox.warning(window,"Rate Limited",f"Discord rate-limited this webhook.\n\nRetry after approximately {retry:.1f} seconds.")
+        return
+
+    try:
+        error_text=json.dumps(r.json(),indent=2)
+    except ValueError:
+        error_text=r.text
+    set_status(f"Failed ({r.status_code})","#ed4245")
+    QMessageBox.critical(window,"Discord Error",f"Discord returned HTTP {r.status_code}.\n\n{error_text}")
 
 
 def clear_fields():
