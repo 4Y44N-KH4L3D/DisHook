@@ -539,7 +539,7 @@ def send_webhook():
     worker=WebhookWorker(url,avatar_path,payload)
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
-    worker.finished.connect(webhook_finished)
+    worker.finished.connect(webhook_finished, Qt.QueuedConnection)
     worker.finished.connect(thread.quit)
     worker.finished.connect(worker.deleteLater)
     thread.finished.connect(thread.deleteLater)
