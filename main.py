@@ -319,15 +319,15 @@ class WebhookWorker(QObject):
         self.payload=payload
 
     def run(self):
-        if self.path:
-            ok,error=update_avatar(self.url,self.path)
-            if not ok:
-                self.finished.emit({"kind":"avatar","error":error})
-                return
         try:
+            if self.path:
+                ok,error=update_avatar(self.url,self.path)
+                if not ok:
+                    self.finished.emit({"kind":"avatar","error":error})
+                    return
             response=requests.post(self.url,json=self.payload,timeout=20)
             self.finished.emit({"kind":"response","response":response})
-        except requests.RequestException as error:
+        except (requests.RequestException,OSError,ValueError) as error:
             self.finished.emit({"kind":"connection","error":error})
 
 
