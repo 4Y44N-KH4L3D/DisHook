@@ -7,7 +7,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication,QWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QLabel,
     QLineEdit,QTextEdit,QPushButton,QMessageBox,QFileDialog,QGroupBox,
-    QSplitter,QScrollArea,QCheckBox,QColorDialog,QDateTimeEdit,QToolTip
+    QScrollArea,QCheckBox,QColorDialog,QDateTimeEdit,QToolTip
 )
 
 MAX_CONTENT,MAX_FIELDS=2000,25
@@ -667,7 +667,7 @@ app=QApplication(sys.argv)
 
 app.setStyleSheet("""
 QWidget {
-    font-family:"Inter","Segoe UI",sans-serif;
+    font-family:"Avenir Next","Inter","Segoe UI",sans-serif;
     font-size:13px;
     color:#f2f3f5;
 }
@@ -921,6 +921,7 @@ al.setVerticalSpacing(10)
 
 username_input=QLineEdit()
 username_input.setPlaceholderText("Optional — override webhook username")
+username_input.setMaxLength(80)
 
 avatar_input=QLineEdit()
 avatar_input.setReadOnly(True)
@@ -945,6 +946,8 @@ wl.setSpacing(10)
 
 webhook_input=QLineEdit()
 webhook_input.setPlaceholderText("https://discord.com/api/webhooks/...")
+webhook_input.setEchoMode(QLineEdit.Password)
+webhook_input.setToolTip("Your webhook URL is hidden for safety.")
 
 message_input=QTextEdit()
 message_input.setPlaceholderText("Write your Discord message...")
