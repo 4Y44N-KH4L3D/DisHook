@@ -939,9 +939,6 @@ al.addWidget(avatar_button,1,2)
 appearance.setLayout(al)
 main.addWidget(appearance)
 
-splitter=QSplitter(Qt.Horizontal)
-splitter.setChildrenCollapsible(False)
-
 webhook=QGroupBox("Webhook")
 wl=QVBoxLayout()
 wl.setSpacing(10)
@@ -978,7 +975,6 @@ wl.addLayout(format_layout)
 wl.addWidget(message_input,1)
 
 webhook.setLayout(wl)
-splitter.addWidget(webhook)
 
 embed=QGroupBox("Embed")
 el=QVBoxLayout()
@@ -1123,17 +1119,24 @@ preview_button.setStyleSheet(button_style("#35373c"))
 preview_button.clicked.connect(open_preview)
 el.addWidget(preview_button)
 
-embed.setLayout(el)
+embed_content=QWidget()
+embed_content.setLayout(el)
 
 embed_scroll=QScrollArea()
 embed_scroll.setWidgetResizable(True)
 embed_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-embed_scroll.setWidget(embed)
+embed_scroll.setWidget(embed_content)
 
-splitter.addWidget(embed_scroll)
-splitter.setSizes([500,550])
+embed_layout=QVBoxLayout(embed)
+embed_layout.setContentsMargins(0,0,0,0)
+embed_layout.addWidget(embed_scroll)
 
-main.addWidget(splitter,1)
+content_layout=QHBoxLayout()
+content_layout.setSpacing(14)
+content_layout.addWidget(webhook,1)
+content_layout.addWidget(embed,1)
+
+main.addLayout(content_layout,1)
 
 controls=QHBoxLayout()
 controls.setSpacing(9)
