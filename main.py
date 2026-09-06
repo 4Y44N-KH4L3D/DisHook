@@ -1123,14 +1123,19 @@ preview_button.setStyleSheet(button_style("#35373c"))
 preview_button.clicked.connect(open_preview)
 el.addWidget(preview_button)
 
-embed.setLayout(el)
+embed_content=QWidget()
+embed_content.setLayout(el)
 
 embed_scroll=QScrollArea()
 embed_scroll.setWidgetResizable(True)
 embed_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-embed_scroll.setWidget(embed)
+embed_scroll.setWidget(embed_content)
 
-splitter.addWidget(embed_scroll)
+embed_layout=QVBoxLayout(embed)
+embed_layout.setContentsMargins(0,0,0,0)
+embed_layout.addWidget(embed_scroll)
+
+splitter.addWidget(embed)
 splitter.setSizes([500,550])
 
 main.addWidget(splitter,1)
