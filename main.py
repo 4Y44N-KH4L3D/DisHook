@@ -939,9 +939,6 @@ al.addWidget(avatar_button,1,2)
 appearance.setLayout(al)
 main.addWidget(appearance)
 
-splitter=QSplitter(Qt.Horizontal)
-splitter.setChildrenCollapsible(False)
-
 webhook=QGroupBox("Webhook")
 wl=QVBoxLayout()
 wl.setSpacing(10)
@@ -978,7 +975,6 @@ wl.addLayout(format_layout)
 wl.addWidget(message_input,1)
 
 webhook.setLayout(wl)
-splitter.addWidget(webhook)
 
 embed=QGroupBox("Embed")
 el=QVBoxLayout()
@@ -1135,10 +1131,12 @@ embed_layout=QVBoxLayout(embed)
 embed_layout.setContentsMargins(0,0,0,0)
 embed_layout.addWidget(embed_scroll)
 
-splitter.addWidget(embed)
-splitter.setSizes([500,550])
+content_layout=QHBoxLayout()
+content_layout.setSpacing(14)
+content_layout.addWidget(webhook,1)
+content_layout.addWidget(embed,1)
 
-main.addWidget(splitter,1)
+main.addLayout(content_layout,1)
 
 controls=QHBoxLayout()
 controls.setSpacing(9)
