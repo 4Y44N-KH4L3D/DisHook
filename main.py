@@ -271,8 +271,6 @@ def build_embed(image_url=None,thumbnail_url=None):
     if url and valid_url(url):
         e["url"]=url
 
-    e["color"]=int(embed_color.lstrip("#"),16)
-
     if t:=get_timestamp():
         e["timestamp"]=t
 
@@ -300,6 +298,14 @@ def build_embed(image_url=None,thumbnail_url=None):
     if thumbnail_url and valid_url(thumbnail_url):
         e["thumbnail"]={"url":thumbnail_url}
 
+    # Discord requires an embed to contain visible content; color/timestamp
+    # alone are not sufficient.
+    if not any(key in e for key in (
+        "title","description","author","fields","footer","image","thumbnail"
+    )):
+        return None
+
+    e["color"]=int(embed_color.lstrip("#"),16)
     return e
 
 
@@ -334,7 +340,31 @@ class WebhookWorker(QObject):
 class WebhookReceiver(QObject):
     @Slot(object)
     def handle(self,result):
-        webhook_finished(result)
+        try:
+            webhook_finished(result)
+        finally:
+            thread=getattr(window,"_webhook_thread",None)
+            if thread is not None:
+                thread.quit()
+
+
+class MainWindow(QWidget):
+    def resizeEvent(self,event):
+        super().resizeEvent(event)
+
+        for name in ("welcome","builder"):
+            child=getattr(self,name,None)
+            if child is not None:
+                child.setGeometry(self.rect())
+
+    def closeEvent(self,event):
+        thread=getattr(self,"_webhook_thread",None)
+
+        if thread is not None and thread.isRunning():
+            thread.quit()
+            thread.wait()
+
+        event.accept()
 
 
 class PreviewWindow(QWidget):
@@ -546,11 +576,12 @@ def send_webhook():
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
     worker.finished.connect(webhook_receiver.handle, Qt.QueuedConnection)
-    worker.finished.connect(thread.quit)
     worker.finished.connect(worker.deleteLater)
     thread.finished.connect(thread.deleteLater)
     thread.finished.connect(lambda:setattr(window,"_webhook_thread",None))
+    thread.finished.connect(lambda:setattr(window,"_webhook_worker",None))
     window._webhook_thread=thread
+    window._webhook_worker=worker
     thread.start()
 
 
@@ -809,7 +840,7 @@ QDateTimeEdit::drop-down {
 
 QToolTip.setFont(app.font())
 
-window=QWidget()
+window=MainWindow()
 window.setObjectName("mainWindow")
 window.setWindowTitle("DisHook")
 window.resize(1050,740)
@@ -819,7 +850,8 @@ window.setMinimumSize(820,620)
 
 welcome=QWidget(window)
 welcome.setObjectName("welcome")
-welcome.setGeometry(0,0,1050,740)
+welcome.setGeometry(window.rect())
+window.welcome=welcome
 
 welcome_layout=QVBoxLayout(welcome)
 welcome_layout.setContentsMargins(30,30,30,30)
@@ -891,8 +923,9 @@ welcome_layout.addStretch(3)
 
 builder=QWidget(window)
 builder.setObjectName("builder")
-builder.setGeometry(0,0,1050,740)
+builder.setGeometry(window.rect())
 builder.hide()
+window.builder=builder
 
 main=QVBoxLayout(builder)
 main.setContentsMargins(16,16,16,14)
