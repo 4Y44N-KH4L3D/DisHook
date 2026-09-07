@@ -2,7 +2,7 @@ import sys,json,base64,mimetypes,html,os
 from urllib.parse import urlparse
 import requests
 
-from PySide6.QtCore import Qt,Signal,Slot,QPropertyAnimation,QParallelAnimationGroup,QThread,QObject
+from PySide6.QtCore import Qt,Signal,Slot,QPropertyAnimation,QParallelAnimationGroup,QThread,QObject,QEvent,QTimer
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication,QWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QLabel,
@@ -22,9 +22,38 @@ embed_color=DEFAULT_COLOR
 preview_window=None
 
 
+class DelayedTooltip(QObject):
+    def __init__(self,widget,text):
+        super().__init__(widget)
+        self.widget=widget
+        self.text=text
+        self.timer=QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.show)
+
+    def eventFilter(self,obj,event):
+        if obj is self.widget:
+            if event.type()==QEvent.Enter:
+                self.timer.start()
+            elif event.type()==QEvent.Leave:
+                self.timer.stop()
+                QToolTip.hideText()
+        return super().eventFilter(obj,event)
+
+    def show(self):
+        if self.widget.underMouse():
+            QToolTip.showText(
+                self.widget.mapToGlobal(self.widget.rect().bottomLeft()),
+                self.text,self.widget
+            )
+
+
 def tooltip(w,text):
-    w.setToolTip(text)
+    w.setToolTip("")
     w.setToolTipDuration(10000)
+    w._tooltip_filter=DelayedTooltip(w,text)
+    w.installEventFilter(w._tooltip_filter)
 
 
 def button_style(color=DEFAULT_COLOR):
@@ -32,12 +61,12 @@ def button_style(color=DEFAULT_COLOR):
     QPushButton {{
         background:{color};
         color:white;
-        border:1px solid rgba(255,255,255,.06);
-        border-radius:9px;
-        padding:9px 13px;
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:8px;
+        padding:10px 15px;
         font-weight:600;
     }}
-    QPushButton:hover {{background:#6d78ff;}}
+    QPushButton:hover {{background:#6875ff;}}
     QPushButton:pressed {{background:#4752c4;}}
     QPushButton:disabled {{background:#292b30;color:#555;}}
     """
@@ -169,6 +198,8 @@ class EmbedField(QWidget):
 
         tooltip(self.name_input,"Maximum 256 characters.")
         tooltip(self.value_input,"Maximum 1024 characters.")
+        tooltip(self.inline,"Display this field beside other inline fields.")
+        tooltip(remove,"Remove this embed field.")
 
         l.addWidget(self.name_input,0,0)
         l.addWidget(self.value_input,0,1)
@@ -298,8 +329,6 @@ def build_embed(image_url=None,thumbnail_url=None):
     if thumbnail_url and valid_url(thumbnail_url):
         e["thumbnail"]={"url":thumbnail_url}
 
-    # Discord requires an embed to contain visible content; color/timestamp
-    # alone are not sufficient.
     if not any(key in e for key in (
         "title","description","author","fields","footer","image","thumbnail"
     )):
@@ -700,53 +729,63 @@ def enter_app():
     group.start()
 
 
+def return_to_start():
+    if preview_window is not None:
+        preview_window.hide()
+    builder.hide()
+    welcome.setWindowOpacity(1)
+    welcome.show()
+    welcome.raise_()
+    window.setWindowTitle("DisHook")
+
+
 app=QApplication(sys.argv)
 webhook_receiver=WebhookReceiver()
 
 app.setStyleSheet("""
 QWidget {
-    font-family:"Avenir Next","Inter","Segoe UI",sans-serif;
+    font-family:"Inter","Segoe UI",sans-serif;
     font-size:13px;
-    color:#f2f3f5;
+    color:#e8eaed;
 }
 
 QWidget#mainWindow,QWidget#builder,QWidget#welcome {
-    background:#111214;
+    background:#0f1115;
 }
 
 QGroupBox {
-    background:#18191c;
+    background:#171a21;
     font-weight:700;
-    border:1px solid #292b2f;
-    border-radius:12px;
-    margin-top:12px;
-    padding:14px;
-    padding-top:21px;
+    border:1px solid #272c36;
+    border-radius:10px;
+    margin-top:11px;
+    padding:13px;
+    padding-top:20px;
 }
 
 QGroupBox::title {
     subcontrol-origin:margin;
     left:14px;
     padding:0 7px;
-    color:#f2f3f5;
+    color:#f1f3f5;
 }
 
 QLineEdit,QTextEdit,QDateTimeEdit {
-    background:#111214;
-    color:#f2f3f5;
-    padding:9px 10px;
-    border:1px solid #303236;
-    border-radius:8px;
+    background:#0d1015;
+    color:#f1f3f5;
+    padding:10px 11px;
+    border:1px solid #2a303b;
+    border-radius:7px;
     selection-background-color:#5865F2;
 }
 
 QLineEdit:hover,QTextEdit:hover,QDateTimeEdit:hover {
-    border:1px solid #45474d;
+    border:1px solid #414a5a;
 }
 
 QLineEdit:focus,QTextEdit:focus,QDateTimeEdit:focus {
     border:1px solid #5865F2;
-    background:#151619;
+    background:#11151c;
 }
 
 QLineEdit:disabled,QTextEdit:disabled,QDateTimeEdit:disabled {
@@ -758,9 +797,9 @@ QLineEdit:disabled,QTextEdit:disabled,QDateTimeEdit:disabled {
 QPushButton {
     background:#5865F2;
     color:white;
-    padding:9px 13px;
-    border:1px solid rgba(255,255,255,.06);
-    border-radius:9px;
+    padding:10px 15px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:8px;
     font-weight:600;
 }
 
@@ -792,13 +831,13 @@ QScrollArea {
 }
 
 QScrollBar:vertical {
-    background:#111214;
-    width:9px;
+    background:#0f1115;
+    width:8px;
     margin:2px;
 }
 
 QScrollBar::handle:vertical {
-    background:#383a40;
+    background:#343b49;
     min-height:30px;
     border-radius:4px;
 }
@@ -821,15 +860,15 @@ QSplitter::handle:hover {
 }
 
 QToolTip {
-    background:#18191c;
+    background:#171a21;
     color:#f2f3f5;
     border:1px solid #5865F2;
     padding:7px 9px;
-    border-radius:6px;
+    border-radius:5px;
 }
 
 QMessageBox {
-    background:#18191c;
+    background:#171a21;
 }
 
 QDateTimeEdit::drop-down {
@@ -854,36 +893,29 @@ welcome.setGeometry(window.rect())
 window.welcome=welcome
 
 welcome_layout=QVBoxLayout(welcome)
-welcome_layout.setContentsMargins(30,30,30,30)
+welcome_layout.setContentsMargins(40,40,40,40)
 
 welcome_layout.addStretch(2)
 
 logo=QLabel("DisHook")
+logo.setObjectName("startLogo")
 logo.setAlignment(Qt.AlignCenter)
 logo.setStyleSheet("""
     QLabel {
-        font-size:58px;
+        font-size:60px;
         font-weight:900;
         color:#ffffff;
-        letter-spacing:1px;
+        letter-spacing:2px;
     }
-""")
-
-tagline=QLabel("A simple Discord webhook builder")
-tagline.setAlignment(Qt.AlignCenter)
-tagline.setStyleSheet("""
-    QLabel {
-        color:#949ba4;
-        font-size:15px;
-    }
+    QLabel:hover {color:#8b96ff;letter-spacing:4px;}
 """)
 
 welcome_layout.addWidget(logo)
-welcome_layout.addWidget(tagline)
-welcome_layout.addSpacing(28)
+welcome_layout.addSpacing(48)
 
 enter_button=QPushButton("Enter")
 enter_button.setFixedSize(180,48)
+tooltip(enter_button,"Open the webhook builder.")
 enter_button.setStyleSheet("""
     QPushButton {
         background:#5865F2;
@@ -903,10 +935,10 @@ button_row.addWidget(enter_button)
 button_row.addStretch()
 
 welcome_layout.addLayout(button_row)
-welcome_layout.addSpacing(30)
+welcome_layout.addStretch(5)
 
 credit=QLabel()
-credit.setAlignment(Qt.AlignCenter)
+credit.setAlignment(Qt.AlignRight)
 credit.setText(
     '<span style="color:#949ba4;">Made by </span>'
     '<a href="https://github.com/4Y44N-KH4L3D" '
@@ -916,8 +948,7 @@ credit.setOpenExternalLinks(True)
 credit.setCursor(Qt.PointingHandCursor)
 credit.setStyleSheet("font-size:12px;")
 
-welcome_layout.addWidget(credit)
-welcome_layout.addStretch(3)
+welcome_layout.addWidget(credit,0,Qt.AlignRight|Qt.AlignBottom)
 
 # ───────────────────────── Builder ─────────────────────────
 
@@ -928,30 +959,34 @@ builder.hide()
 window.builder=builder
 
 main=QVBoxLayout(builder)
-main.setContentsMargins(16,16,16,14)
-main.setSpacing(14)
+main.setContentsMargins(20,18,20,16)
+main.setSpacing(16)
 
 header=QHBoxLayout()
 
 title=QLabel("DisHook")
+title.setAlignment(Qt.AlignCenter)
 title.setStyleSheet("""
     QLabel {
-        font-size:24px;
+        font-size:28px;
         font-weight:900;
         color:#f2f3f5;
     }
 """)
 
-subtitle=QLabel("Discord Webhook Builder")
-subtitle.setStyleSheet("color:#949ba4;font-size:12px;")
-
 header_text=QVBoxLayout()
-header_text.setSpacing(2)
 header_text.addWidget(title)
-header_text.addWidget(subtitle)
 
+back_button=QPushButton("← Back")
+back_button.setStyleSheet(button_style("#35373c"))
+tooltip(back_button,"Return to the start screen.")
+back_button.clicked.connect(return_to_start)
+
+header.addWidget(back_button)
+header.addStretch()
 header.addLayout(header_text)
 header.addStretch()
+
 main.addLayout(header)
 
 appearance=QGroupBox("Appearance")
@@ -969,6 +1004,7 @@ avatar_input.setPlaceholderText("Optional — choose an image")
 
 avatar_button=QPushButton("Choose Image")
 avatar_button.setStyleSheet(button_style("#35373c"))
+tooltip(avatar_button,"Choose an image to use as the webhook avatar.")
 avatar_button.clicked.connect(choose_avatar)
 
 al.addWidget(QLabel("Username"),0,0)
@@ -988,13 +1024,15 @@ webhook_input=QLineEdit()
 webhook_input.setPlaceholderText("https://discord.com/api/webhooks/...")
 webhook_input.setEchoMode(QLineEdit.Password)
 webhook_input.setToolTip("Your webhook URL is hidden for safety.")
+tooltip(webhook_input,"Enter the Discord webhook URL that will receive the message.")
 
 message_input=QTextEdit()
 message_input.setPlaceholderText("Write your Discord message...")
 message_input.setMinimumHeight(180)
+tooltip(message_input,"Enter the message to send. Discord allows up to 2,000 characters.")
 
 format_layout=QHBoxLayout()
-format_layout.setSpacing(6)
+format_layout.setSpacing(3)
 
 for label,start,end in (
     ("Bold","**","**"),
@@ -1005,7 +1043,20 @@ for label,start,end in (
     ("Spoiler","||","||")
 ):
     b=QPushButton(label)
-    b.setStyleSheet(button_style("#35373c"))
+    b.setStyleSheet("""
+        QPushButton {
+            background:#35373c;
+            color:white;
+            padding:7px 8px;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:7px;
+            font-size:12px;
+            font-weight:600;
+        }
+        QPushButton:hover {background:#454951;}
+        QPushButton:pressed {background:#292b30;}
+    """)
+    tooltip(b,f"Add {label.lower()} formatting to the selected message text.")
     b.clicked.connect(lambda _,s=start,e=end:insert_format(s,e))
     format_layout.addWidget(b)
 
@@ -1017,7 +1068,20 @@ wl.addWidget(QLabel("Message"))
 wl.addLayout(format_layout)
 wl.addWidget(message_input,1)
 
-webhook.setLayout(wl)
+webhook_content=QWidget()
+webhook_content.setLayout(wl)
+
+webhook_scroll=QScrollArea()
+webhook_scroll.setWidgetResizable(True)
+webhook_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+webhook_scroll.setStyleSheet("QScrollArea{background:#171a21;border:none;}")
+webhook_scroll.viewport().setStyleSheet("background:#171a21;")
+webhook_content.setStyleSheet("background:#171a21;")
+webhook_scroll.setWidget(webhook_content)
+
+webhook_layout=QVBoxLayout(webhook)
+webhook_layout.setContentsMargins(0,0,0,0)
+webhook_layout.addWidget(webhook_scroll)
 
 embed=QGroupBox("Embed")
 el=QVBoxLayout()
@@ -1025,6 +1089,7 @@ el.setSpacing(12)
 
 embed_enabled=QCheckBox("Enable Embed")
 embed_enabled.setStyleSheet("QCheckBox{font-weight:700;}")
+tooltip(embed_enabled,"Enable or disable the embed customization options.")
 el.addWidget(embed_enabled)
 
 basic_group=QGroupBox("Basic")
@@ -1042,6 +1107,7 @@ embed_url=QLineEdit()
 embed_url.setPlaceholderText("Title URL — optional")
 
 color_button=QPushButton("Choose Colour")
+tooltip(color_button,"Choose the color shown on the left side of the embed.")
 color_button.clicked.connect(choose_color)
 
 cr=QHBoxLayout()
@@ -1149,6 +1215,7 @@ fields_scroll.setWidget(fields_container)
 
 add_field_button=QPushButton("+ Add Field")
 add_field_button.setStyleSheet(button_style("#35373c"))
+tooltip(add_field_button,"Add a name/value field to the embed.")
 add_field_button.clicked.connect(add_field)
 
 fgl.addWidget(fields_scroll,1)
@@ -1159,8 +1226,27 @@ el.addWidget(fields_group,1)
 
 preview_button=QPushButton("Live Preview")
 preview_button.setStyleSheet(button_style("#35373c"))
+tooltip(preview_button,"Open a live preview of the message and embed.")
 preview_button.clicked.connect(open_preview)
 el.addWidget(preview_button)
+
+for widget,text in (
+    (username_input,"Optional name displayed instead of the webhook's default name."),
+    (avatar_input,"Selected image path for the webhook avatar."),
+    (embed_title,"Optional embed title. Maximum 256 characters."),
+    (embed_description,"Optional embed description. Maximum 4,096 characters."),
+    (embed_url,"Optional URL opened when the embed title is clicked."),
+    (embed_author,"Optional embed author name. Maximum 256 characters."),
+    (embed_author_url,"Optional URL opened when the author is clicked."),
+    (embed_author_icon,"Optional HTTP/HTTPS URL for the author icon."),
+    (embed_image_input,"Optional HTTP/HTTPS URL for the main embed image."),
+    (embed_thumbnail_input,"Optional HTTP/HTTPS URL for the embed thumbnail."),
+    (embed_footer,"Optional embed footer text. Maximum 2,048 characters."),
+    (embed_footer_icon,"Optional HTTP/HTTPS URL for the footer icon."),
+    (timestamp_input,"Choose the timestamp displayed in the embed."),
+    (timestamp_enabled,"Include the selected timestamp in the embed.")
+):
+    tooltip(widget,text)
 
 embed_content=QWidget()
 embed_content.setLayout(el)
@@ -1168,9 +1254,9 @@ embed_content.setLayout(el)
 embed_scroll=QScrollArea()
 embed_scroll.setWidgetResizable(True)
 embed_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-embed_scroll.setStyleSheet("QScrollArea{background:#18191c;border:none;}")
-embed_scroll.viewport().setStyleSheet("background:#18191c;")
-embed_content.setStyleSheet("background:#18191c;")
+embed_scroll.setStyleSheet("QScrollArea{background:#171a21;border:none;}")
+embed_scroll.viewport().setStyleSheet("background:#171a21;")
+embed_content.setStyleSheet("background:#171a21;")
 embed_scroll.setWidget(embed_content)
 
 embed_layout=QVBoxLayout(embed)
@@ -1178,7 +1264,7 @@ embed_layout.setContentsMargins(0,0,0,0)
 embed_layout.addWidget(embed_scroll)
 
 content_layout=QHBoxLayout()
-content_layout.setSpacing(14)
+content_layout.setSpacing(16)
 content_layout.addWidget(webhook,1)
 content_layout.addWidget(embed,1)
 
@@ -1189,11 +1275,13 @@ controls.setSpacing(9)
 
 send_button=QPushButton("Send Webhook")
 send_button.setMinimumHeight(44)
+tooltip(send_button,"Send the message and embed to the webhook URL.")
 send_button.clicked.connect(send_webhook)
 
 clear_button=QPushButton("Clear")
 clear_button.setMinimumHeight(44)
 clear_button.setStyleSheet(button_style("#35373c"))
+tooltip(clear_button,"Clear all message, embed, avatar, and webhook fields.")
 clear_button.clicked.connect(clear_fields)
 
 controls.addWidget(send_button,2)
