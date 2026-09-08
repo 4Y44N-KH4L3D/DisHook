@@ -7,7 +7,7 @@ Create a message, customize its appearance, add a rich embed, preview it, and se
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![PySide6](https://img.shields.io/badge/UI-PySide6-41CD52?style=for-the-badge&logo=qt&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-5865F2?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Beta-F0B232?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Stable-2EA44F?style=for-the-badge)
 
 ## ✨ What you can do
 
@@ -26,9 +26,9 @@ Screenshots will be added soon.
 
 ## 📦 Download
 
-The current beta release includes a ready-to-run **Linux x86_64 executable**:
+The current release includes a ready-to-run **Linux x86_64 executable**:
 
-1. Open the [v1.0.0-beta release](https://github.com/4Y44N-KH4L3D/Discord-Webhook-Sender/releases/tag/v1.0.0-beta).
+1. Open the [v1.0.0 release](https://github.com/4Y44N-KH4L3D/Discord-Webhook-Sender/releases/tag/v1.0.0).
 2. Download `DisHook-linux-x86_64` from the release assets.
 3. Make it executable if needed:
    ```bash
@@ -39,7 +39,7 @@ The current beta release includes a ready-to-run **Linux x86_64 executable**:
    ./DisHook-linux-x86_64
    ```
 
-> **Windows support is coming soon.** A Windows `.exe` is not included in this beta release yet. Until it is available, Windows users can run DisHook from source with Python.
+> **Windows support is coming soon.** A Windows `.exe` is not included yet. Until it is available, Windows users can run DisHook from source with Python.
 
 ## 🚀 Run from source
 
@@ -108,7 +108,7 @@ If a webhook URL is exposed, delete or regenerate that webhook in Discord immedi
 
 ## 🧪 Release status
 
-DisHook is currently available as **v1.0.0-beta**. The core sending, embed, preview, validation, and error-handling flows have been tested on Linux.
+DisHook is currently available as **v1.0.0 for Linux**. The core sending, embed, preview, validation, and error-handling flows have been tested on Linux. A Windows executable is planned for a future release.
 
 If you find a bug, please open an issue with your operating system, Python version, and the steps needed to reproduce it. Never include a real webhook URL in an issue.
 
