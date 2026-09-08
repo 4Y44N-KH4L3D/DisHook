@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 import requests
 
 from PySide6.QtCore import Qt,Signal,Slot,QPropertyAnimation,QParallelAnimationGroup,QThread,QObject,QEvent,QTimer
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor,QIcon
 from PySide6.QtWidgets import (
     QApplication,QWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QLabel,
     QLineEdit,QTextEdit,QPushButton,QMessageBox,QFileDialog,QGroupBox,
@@ -20,6 +20,14 @@ DEFAULT_COLOR="#5865F2"
 avatar_path=""
 embed_color=DEFAULT_COLOR
 preview_window=None
+
+
+def resource_path(relative_path):
+    base_path=getattr(sys,"_MEIPASS",os.path.abspath(os.path.dirname(__file__)))
+    return os.path.join(base_path,relative_path)
+
+
+APP_ICON=resource_path("assets/Icon.png")
 
 
 class DelayedTooltip(QObject):
@@ -401,6 +409,7 @@ class PreviewWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("DisHook Preview")
+        self.setWindowIcon(QIcon(APP_ICON))
         self.resize(650,700)
         self.setMinimumSize(500,500)
 
@@ -740,6 +749,7 @@ def return_to_start():
 
 
 app=QApplication(sys.argv)
+app.setWindowIcon(QIcon(APP_ICON))
 webhook_receiver=WebhookReceiver()
 
 app.setStyleSheet("""
@@ -882,6 +892,7 @@ QToolTip.setFont(app.font())
 window=MainWindow()
 window.setObjectName("mainWindow")
 window.setWindowTitle("DisHook")
+window.setWindowIcon(QIcon(APP_ICON))
 window.resize(1050,740)
 window.setMinimumSize(820,620)
 
