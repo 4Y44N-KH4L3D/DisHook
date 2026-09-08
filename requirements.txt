@@ -1,2 +1,5 @@
+# Desktop interface and Qt widgets
 PySide6>=6.6,<7
+
+# HTTP requests to Discord
 requests>=2.31,<3
