@@ -885,8 +885,6 @@ window.setWindowTitle("DisHook")
 window.resize(1050,740)
 window.setMinimumSize(820,620)
 
-# ───────────────────────── Welcome ─────────────────────────
-
 welcome=QWidget(window)
 welcome.setObjectName("welcome")
 welcome.setGeometry(window.rect())
@@ -949,8 +947,6 @@ credit.setCursor(Qt.PointingHandCursor)
 credit.setStyleSheet("font-size:12px;")
 
 welcome_layout.addWidget(credit,0,Qt.AlignRight|Qt.AlignBottom)
-
-# ───────────────────────── Builder ─────────────────────────
 
 builder=QWidget(window)
 builder.setObjectName("builder")
