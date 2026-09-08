@@ -151,6 +151,8 @@ Check that:
 
 The current stable release is `v1.0.0` for Linux. The source version can also be run on Linux and Windows. Windows packaging is planned for a future release.
 
+This is an early release, so bugs and platform-specific issues may still occur. If something does not work as expected, please report the steps to reproduce it, your operating system, and your Python version.
+
 ## License
 
 DisHook is distributed under the [MIT License](LICENSE).
