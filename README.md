@@ -1,56 +1,50 @@
 # DisHook
 
-**DisHook** is a small desktop app for building and sending Discord webhooks without having to write JSON by hand.
+DisHook is a PySide6 desktop application for creating and sending Discord webhook messages. It provides a graphical interface for regular messages, webhook appearance settings, rich embeds, previews, and basic Discord limit validation.
 
-Create a message, customize its appearance, add a rich embed, preview it, and send it from one simple interface.
+## Features
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![PySide6](https://img.shields.io/badge/UI-PySide6-41CD52?style=for-the-badge&logo=qt&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-5865F2?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Stable-2EA44F?style=for-the-badge)
+- Send messages through a Discord webhook
+- Override the webhook username and avatar
+- Create embeds with titles, descriptions, colors, authors, footers, images, thumbnails, timestamps, and fields
+- Preview messages and embeds before sending
+- Add common Markdown formatting to message text
+- Validate message, field, embed, and avatar limits
+- Display clear status messages for successful sends, errors, and rate limits
+- Use the interface in smaller windows with scrollable panels
 
-## ✨ What you can do
-
-- 💬 Send regular Discord webhook messages
-- 🎨 Override the webhook username and avatar
-- 🧩 Build rich embeds with titles, descriptions, colors, authors, footers, media, timestamps, and fields
-- 👀 Preview the message before sending it
-- ✍️ Add common Discord Markdown formatting with quick buttons
-- ✅ Validate Discord limits before making a request
-- 🖥️ Use the app comfortably in a smaller window with built-in scrolling
-- 🛡️ See clear status messages for success, errors, and rate limits
-
-## 📸 Screenshots
-
-Screenshots will be added soon.
-
-## 📦 Download
-
-The current release includes a ready-to-run **Linux x86_64 executable**:
-
-1. Open the [v1.0.0 release](https://github.com/4Y44N-KH4L3D/Discord-Webhook-Sender/releases/tag/v1.0.0).
-2. Download `DisHook-linux-x86_64` from the release assets.
-3. Make it executable if needed:
-   ```bash
-   chmod +x DisHook-linux-x86_64
-   ```
-4. Run it:
-   ```bash
-   ./DisHook-linux-x86_64
-   ```
-
-> **Windows support is coming soon.** A Windows `.exe` is not included yet. Until it is available, Windows users can run DisHook from source with Python.
-
-## 🚀 Run from source
-
-### Requirements
+## Requirements
 
 - Python 3.10 or newer
 - A Discord webhook URL
+- Linux or Windows when running from source
+
+The current release includes a prebuilt Linux x86_64 executable. A Windows executable is planned for a future release.
+
+## Download
+
+The latest stable release is available on the [GitHub Releases page](https://github.com/4Y44N-KH4L3D/DisHook/releases/latest).
+
+The release currently includes:
+
+```text
+DisHook-linux-x86_64
+```
+
+On Linux, download the file, open a terminal in its directory, and run:
+
+```bash
+chmod +x DisHook-linux-x86_64
+./DisHook-linux-x86_64
+```
+
+Depending on your desktop environment, you may also need to enable **Allow executing file as a program** in the file's properties before opening it.
+
+## Run from source
 
 ### Linux
 
-From the project folder:
+From the project directory:
 
 ```bash
 python3 -m venv .venv
@@ -59,7 +53,7 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-If you use Fish shell:
+For Fish shell:
 
 ```fish
 python3 -m venv .venv
@@ -70,6 +64,8 @@ python main.py
 
 ### Windows
 
+Open PowerShell in the project directory:
+
 ```powershell
 py -m venv .venv
 .venv\Scripts\activate
@@ -77,17 +73,19 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-## 🧭 How to use DisHook
+There is currently no prebuilt Windows executable. Running from source requires Python to be installed.
 
-1. Open the app and click **Enter**.
-2. Paste your Discord webhook URL.
-3. Write a message, or enable an embed and fill in its details.
-4. Use **Live Preview** to check the result.
-5. Click **Send Webhook**.
+## Usage
 
-The **Clear** button resets the form, and **← Back** returns to the start screen.
+1. Open DisHook and select **Enter**.
+2. Enter a Discord webhook URL.
+3. Add a message, or enable the embed section and configure an embed.
+4. Use **Live Preview** to review the message.
+5. Select **Send Webhook**.
 
-## 📏 Discord limits
+The **Clear** button resets the form. The **Back** button returns to the start screen without closing the application.
+
+## Discord limits
 
 DisHook checks the main limits used by Discord webhooks:
 
@@ -98,20 +96,61 @@ DisHook checks the main limits used by Discord webhooks:
 | Embed content | 6,000 characters |
 | Embed title | 256 characters |
 | Embed description | 4,096 characters |
+| Embed author name | 256 characters |
+| Embed field name | 256 characters |
+| Embed field value | 1,024 characters |
+| Embed footer text | 2,048 characters |
 | Avatar image | 8 MB |
 
-## 🔐 Keep your webhook private
+## Security
 
-A Discord webhook URL works like a password. Do not post it in screenshots, share it publicly, or commit it to Git.
+Treat a Discord webhook URL like a password. Do not include it in screenshots, issue reports, source files, or commit history.
 
-If a webhook URL is exposed, delete or regenerate that webhook in Discord immediately.
+If a webhook URL is exposed, delete or regenerate the webhook in Discord immediately.
 
-## 🧪 Release status
+## Troubleshooting
 
-DisHook is currently available as **v1.0.0 for Linux**. The core sending, embed, preview, validation, and error-handling flows have been tested on Linux. A Windows executable is planned for a future release.
+### The application does not start
 
-If you find a bug, please open an issue with your operating system, Python version, and the steps needed to reproduce it. Never include a real webhook URL in an issue.
+Make sure the virtual environment is active and the dependencies are installed:
 
-## 📄 License
+```bash
+python -m pip install -r requirements.txt
+```
 
-DisHook is released under the [MIT License](LICENSE).
+Then run:
+
+```bash
+python main.py
+```
+
+### The Linux executable does not open
+
+Run it from a terminal so that any error message is visible:
+
+```bash
+./DisHook-linux-x86_64
+```
+
+If permission is denied, make the file executable:
+
+```bash
+chmod +x DisHook-linux-x86_64
+```
+
+### A webhook fails to send
+
+Check that:
+
+- The webhook URL belongs to Discord and has not been deleted.
+- The message or embed contains content.
+- The message and embed are within Discord's limits.
+- Your network connection is available.
+
+## Release status
+
+The current stable release is `v1.0.0` for Linux. The source version can also be run on Linux and Windows. Windows packaging is planned for a future release.
+
+## License
+
+DisHook is distributed under the [MIT License](LICENSE).
