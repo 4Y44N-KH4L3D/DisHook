@@ -4,34 +4,31 @@
   <img src="https://img.shields.io/badge/status-stable-2ea44f?style=flat-square" alt="Stable">
   <img src="https://img.shields.io/badge/platform-linux-1793d1?style=flat-square" alt="Linux">
   <img src="https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/ui-pyside6-41cd52?style=flat-square&logo=qt&logoColor=white" alt="PySide6">
   <img src="https://img.shields.io/badge/license-mit-5865f2?style=flat-square" alt="MIT License">
 </p>
 
-DisHook is a PySide6 desktop application for creating and sending Discord webhook messages. It provides a graphical interface for regular messages, webhook appearance settings, rich embeds, previews, and basic Discord limit validation.
+**DisHook** is a Discord webhook sender built with **Python**. Create messages and embeds, preview them, and send them through a simple desktop interface.
 
 ## Features
 
-- Send messages through a Discord webhook
-- Override the webhook username and avatar
-- Create embeds with titles, descriptions, colours, authors, footers, images, thumbnails, timestamps, and fields
-- Preview messages and embeds before sending
-- Add common Markdown formatting to message text
-- Validate message, field, embed, and avatar limits
-- Display clear status messages for successful sends, errors, and rate limits
-- Use the interface in smaller windows with scrollable panels
+- Send Discord webhook messages
+- Customise usernames and avatars
+- Create rich embeds
+- Preview messages before sending
+- Check Discord limits
+- Show clear send status messages
 
 ## Requirements
 
 - Python 3.10 or newer
 - A Discord webhook URL
-- Linux or Windows when running from source
+- Linux or Windows for source runs
 
-The current release includes a prebuilt Linux x86_64 executable. A Windows executable is planned for a future release.
+The current release includes a Linux x86_64 executable. A Windows executable is planned.
 
 ## Download
 
-The latest stable release is available on the [GitHub Releases page](https://github.com/4Y44N-KH4L3D/DisHook/releases/latest).
+Download the latest release from the [GitHub Releases page](https://github.com/4Y44N-KH4L3D/DisHook/releases/latest).
 
 The release currently includes:
 
@@ -39,20 +36,20 @@ The release currently includes:
 DisHook-linux-x86_64
 ```
 
-On Linux, download the file, open a terminal in its directory, and run:
+On Linux:
 
 ```bash
 chmod +x DisHook-linux-x86_64
 ./DisHook-linux-x86_64
 ```
 
-Depending on your desktop environment, you may also need to enable **Allow executing file as a program** in the file's properties before opening it.
+You may need to enable **Allow executing file as a program** in the file's properties.
 
 ## Release status
 
-The current stable release is `v1.0.0` for Linux. The source version can also be run on Linux and Windows. Windows packaging is planned for a future release.
+The current stable release is `v1.0.0` for Linux. The source version runs on Linux and Windows.
 
-This is an early release, so bugs and platform-specific issues may still occur. If something does not work as expected, please report the steps to reproduce it, your operating system, and your Python version.
+<u>This is an early release, so bugs may still occur.</u> Please report issues with your operating system and Python version.
 
 <details>
 <summary>Run from source</summary>
@@ -97,9 +94,8 @@ There is currently no prebuilt Windows executable. Running from source requires 
 
 1. Open DisHook and select **Enter**.
 2. Enter a Discord webhook URL.
-3. Add a message, or enable the embed section and configure an embed.
-4. Use **Live Preview** to review the message.
-5. Select **Send Webhook**.
+3. Add a message or configure an embed.
+4. Select **Live Preview**, then **Send Webhook**.
 
 The **Clear** button resets the form. The **Back** button returns to the start screen without closing the application.
 
@@ -180,9 +176,7 @@ Check that:
 
 ## Support
 
-If you found DisHook useful, consider leaving a star on the repository. It helps the project get noticed and lets me know that it is useful to you.
-
-If you enjoy using it, a star is always appreciated.
+If you like DisHook, please leave a **star** on the repository.
 
 </div>
 
