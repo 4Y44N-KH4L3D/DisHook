@@ -50,7 +50,7 @@ From the project directory:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python main.py
+python3 main.py
 ```
 
 For Fish shell:
@@ -59,7 +59,7 @@ For Fish shell:
 python3 -m venv .venv
 source .venv/bin/activate.fish
 python -m pip install -r requirements.txt
-python main.py
+python3 main.py
 ```
 
 ### Windows
@@ -68,7 +68,7 @@ Open PowerShell in the project directory:
 
 ```powershell
 py -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python main.py
 ```
