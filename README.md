@@ -53,6 +53,22 @@ chmod +x DisHook-linux-x86_64-v1.1.0
 
 You may need to enable **Allow executing file as a program** in the file's properties.
 
+On Windows, download the source release with PowerShell:
+
+```powershell
+Invoke-WebRequest `
+  -Uri https://github.com/4Y44N-KH4L3D/DisHook/archive/refs/tags/v1.1.0.zip `
+  -OutFile DisHook-v1.1.0.zip
+Expand-Archive DisHook-v1.1.0.zip -DestinationPath .
+cd DisHook-1.1.0
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python main.py
+```
+
+There is currently no Windows executable, so Windows users should run the source release.
+
 ## Release status
 
 The current stable release is `v1.1.0` for Linux. The source version runs on Linux and Windows.
