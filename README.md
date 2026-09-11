@@ -38,24 +38,24 @@ The current release includes a Linux x86_64 executable. A Windows executable is 
 
 Download the latest release from the [GitHub Releases page](https://github.com/4Y44N-KH4L3D/DisHook/releases/latest).
 
-The release currently includes:
+The `v1.1.0` release includes:
 
 ```text
-DisHook-linux-x86_64
+DisHook-linux-x86_64-v1.1.0
 ```
 
 On Linux:
 
 ```bash
-chmod +x DisHook-linux-x86_64
-./DisHook-linux-x86_64
+chmod +x DisHook-linux-x86_64-v1.1.0
+./DisHook-linux-x86_64-v1.1.0
 ```
 
 You may need to enable **Allow executing file as a program** in the file's properties.
 
 ## Release status
 
-The current stable release is `v1.0.0` for Linux. The source version runs on Linux and Windows.
+The current stable release is `v1.1.0` for Linux. The source version runs on Linux and Windows.
 
 <u>This is an early release, so bugs may still occur.</u> Please report issues with your operating system and Python version.
 
