@@ -17,6 +17,14 @@
 - Preview messages before sending
 - Check Discord limits
 - Show clear send status messages
+- Disable `@everyone`, `@here`, and role/user mention parsing in webhook payloads
+- Broadcast one payload to multiple webhook URLs (one per line), sequentially and with bounded rate-limit retries
+- Save/load JSON templates and import/export safe payload JSON (webhook URLs are never included in templates)
+- Use `{date}`, `{time}` (with milliseconds), and `{computer_name}` placeholders; these are expanded immediately before each webhook send
+- Live Discord-style preview with three-column inline-field wrapping
+- Hex colour picker with Discord decimal colour conversion
+- Markdown quick actions, code blocks, spoilers, emoji insertion, and user/role mention helpers
+- Delayed tooltips throughout the interface
 
 ## Requirements
 
@@ -90,14 +98,52 @@ There is currently no prebuilt Windows executable. Running from source requires 
 </details>
 
 <details>
+<summary>Build a Linux executable</summary>
+
+The repository includes the tracked `DisHook.spec` PyInstaller configuration. From an
+activated virtual environment:
+
+```bash
+python -m pip install -r requirements.txt
+python -m pip install pyinstaller
+pyinstaller --clean --noconfirm DisHook.spec
+./dist/DisHook
+```
+
+`build/` and `dist/` are generated outputs and are intentionally not committed.
+
+</details>
+
+<details>
 <summary>Usage</summary>
 
 1. Open DisHook and select **Enter**.
-2. Enter a Discord webhook URL.
+2. Enter one or more Discord webhook URLs (one per line).
 3. Add a message or configure an embed.
 4. Select **Live Preview**, then **Send Webhook**.
 
 The **Clear** button resets the form. The **Back** button returns to the start screen without closing the application.
+Template files intentionally omit webhook URLs and restore only valid local avatar paths.
+Raw payload imports never change the webhook URL field and accept a single payload wrapped in
+either a top-level array or `{"messages": [payload]}`. Invalid or unsafe payload structures
+are rejected before changing the editor.
+Rate-limited requests are retried sequentially up to three times; a final failure is reported
+without exposing URLs. Closing the app during a request waits for the worker to stop cleanly.
+
+When an avatar is selected, DisHook updates the webhook avatar before sending. Discord
+stores that avatar on the webhook, so it remains the webhook's avatar for later sends
+until it is changed again.
+
+Supported placeholders:
+
+| Placeholder | Replacement |
+| --- | --- |
+| `{date}` | Local date in `YYYY-MM-DD` format |
+| `{time}` | Local time in `HH:MM:SS.mmm` format |
+| `{computer_name}` | Local computer name |
+
+Placeholders are expanded in the worker immediately before each webhook request and do not
+modify the text shown in the editor.
 
 </details>
 
